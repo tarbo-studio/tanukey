@@ -1,5 +1,5 @@
 <template>
-	<MkPagination ref="pagingComponent" :pagination="pagination" :timeline="true">
+	<MkPagination ref="pagingComponent" :pagination="pagination">
 		<template #empty>
 			<div class="_fullinfo">
 				<img :src="infoImageUrl" class="_ghost" />
