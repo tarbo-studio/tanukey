@@ -47,7 +47,6 @@ export const paramDef = {
 		untilId: { type: 'string', format: 'misskey:id' },
 		sinceDate: { type: 'integer' },
 		untilDate: { type: 'integer' },
-		idOnly: { type: 'boolean', default: false },
 	},
 	required: [],
 } as const;
@@ -111,7 +110,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			}
 			//#endregion
 
-			const notes = await query.limit(ps.limit).getMany();
+			const timeline = await query.limit(ps.limit).getMany();
 
 			process.nextTick(() => {
 				if (me) {
@@ -119,7 +118,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				}
 			});
 
-			return await this.noteEntityService.packMany(notes, me, undefined, ps.idOnly);
+			return await this.noteEntityService.packMany(timeline, me);
 		});
 	}
 }

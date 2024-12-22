@@ -38,7 +38,6 @@ export const paramDef = {
 		includeLocalRenotes: { type: 'boolean', default: true },
 		withFiles: { type: 'boolean', default: false },
 		withReplies: { type: 'boolean', default: false },
-		idOnly: { type: 'boolean', default: false },
 	},
 	required: [],
 } as const;
@@ -124,13 +123,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			}
 			//#endregion
 
-			const notes = await query.limit(ps.limit).getMany();
+			const timeline = await query.limit(ps.limit).getMany();
 
 			process.nextTick(() => {
 				this.activeUsersChart.read(me);
 			});
 
-			return await this.noteEntityService.packMany(notes, me, undefined, ps.idOnly);
+			return await this.noteEntityService.packMany(timeline, me);
 		});
 	}
 }

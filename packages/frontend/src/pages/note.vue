@@ -100,48 +100,40 @@ const nextPagination: Paging = {
 	reversed: true,
 };
 
-async function fetchNote() {
+function fetchNote() {
 	hasPrev = false;
 	hasNext = false;
 	showPrev = false;
 	showNext = false;
 	note = null;
-
-	// Public/Homeはこれで取得できる
-	const res = await fetch(`/notes/${props.noteId}.json`);
-	if (res.ok) {
-		note = await res.json();
-	}
-	if (!note) {
-		// Followerは取れないので再度取得する
-		note = await os.api("notes/show", {
-			noteId: props.noteId,
+	os.api("notes/show", {
+		noteId: props.noteId,
+	})
+		.then((res) => {
+			note = res;
+			Promise.all([
+				os.api("notes/clips", {
+					noteId: note.id,
+				}),
+				os.api("users/notes", {
+					userId: note.userId,
+					untilId: note.id,
+					limit: 1,
+				}),
+				os.api("users/notes", {
+					userId: note.userId,
+					sinceId: note.id,
+					limit: 1,
+				}),
+			]).then(([_clips, prev, next]) => {
+				clips = _clips;
+				hasPrev = prev.length !== 0;
+				hasNext = next.length !== 0;
+			});
 		})
-		if (!note) {
-			console.error(`Note not found: ${props.noteId}`);
-			return;
-		}
-	}
-
-	Promise.all([
-		os.api("notes/clips", {
-			noteId: note.id,
-		}),
-		os.api("users/notes", {
-			userId: note.userId,
-			untilId: note.id,
-			limit: 1,
-		}),
-		os.api("users/notes", {
-			userId: note.userId,
-			sinceId: note.id,
-			limit: 1,
-		}),
-	]).then(([_clips, prev, next]) => {
-		clips = _clips;
-		hasPrev = prev.length !== 0;
-		hasNext = next.length !== 0;
-	});
+		.catch((err) => {
+			error = err;
+		});
 }
 
 watch(() => props.noteId, fetchNote, {

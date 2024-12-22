@@ -367,7 +367,6 @@ export class NoteEntityService implements OnModuleInit {
 			detail?: boolean;
 			skipHide?: boolean;
 		},
-		idOnly?: boolean,
 	) {
 		if (notes.length === 0) return [];
 
@@ -392,7 +391,7 @@ export class NoteEntityService implements OnModuleInit {
 		const fileIds = notes.map(n => [n.fileIds, n.renote?.fileIds, n.reply?.fileIds]).flat(2).filter(isNotNull);
 		const packedFiles = fileIds.length > 0 ? await this.driveFileEntityService.packManyByIdsMap(fileIds) : new Map();
 
-		return await Promise.all(notes.map(n => (idOnly && ['public', 'home'].includes(n.visibility)) ? { id: n.id } : this.pack(n, me, {
+		return await Promise.all(notes.map(n => this.pack(n, me, {
 			...options,
 			_hint_: {
 				myReactions: myReactionsMap,
