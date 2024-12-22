@@ -42,6 +42,7 @@ export const paramDef = {
 		untilId: { type: 'string', format: 'misskey:id' },
 		sinceDate: { type: 'integer' },
 		untilDate: { type: 'integer' },
+		idOnly: { type: 'boolean', default: false },
 	},
 	required: ['roleId'],
 } as const;
@@ -108,7 +109,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			const notes = await query.getMany();
 			notes.sort((a, b) => a.id > b.id ? -1 : 1);
 
-			return await this.noteEntityService.packMany(notes, me);
+			return await this.noteEntityService.packMany(notes, me, undefined, ps.idOnly);
 		});
 	}
 }

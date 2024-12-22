@@ -46,6 +46,7 @@ export const paramDef = {
 		limit: { type: "integer", minimum: 1, maximum: 100, default: 10 },
 		sinceId: { type: "string", format: "misskey:id" },
 		untilId: { type: "string", format: "misskey:id" },
+		idOnly: { type: 'boolean', default: false },
 	},
 	required: ["listId"],
 } as const;
@@ -106,7 +107,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			this.activeUsersChart.read(me);
 
-			return await this.noteEntityService.packMany(notes, me);
+			return await this.noteEntityService.packMany(notes, me, undefined, ps.idOnly);
 		});
 	}
 }

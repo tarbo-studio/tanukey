@@ -99,6 +99,7 @@ const setupStream = () => {
 		endpoint = "antennas/notes";
 		query = {
 			antennaId: props.antenna,
+			idOnly: idOnly,
 		};
 		connection = stream.useChannel("antenna", {
 			antennaId: props.antenna,
@@ -109,6 +110,7 @@ const setupStream = () => {
 		endpoint = "notes/timeline";
 		query = {
 			withReplies: defaultStore.state.showTimelineReplies,
+			idOnly: idOnly,
 		};
 		connection = stream.useChannel("homeTimeline", {
 			withReplies: defaultStore.state.showTimelineReplies,
@@ -119,6 +121,7 @@ const setupStream = () => {
 		endpoint = "notes/local-timeline";
 		query = {
 			withReplies: defaultStore.state.showTimelineReplies,
+			idOnly: idOnly,
 		};
 		connection = stream.useChannel("localTimeline", {
 			withReplies: defaultStore.state.showTimelineReplies,
@@ -132,6 +135,7 @@ const setupStream = () => {
 			withLocal: defaultStore.state.publicTlShowLocalPost,
 			withRemote: defaultStore.state.publicTlShowRemoteFollowPost,
 			withChannel: defaultStore.state.publicTlShowChannelFollowPost,
+			idOnly: idOnly,
 		};
 		connection = stream.useChannel("hybridTimeline", {
 			withReplies: defaultStore.state.showTimelineReplies,
@@ -161,19 +165,20 @@ const setupStream = () => {
 		endpoint = "notes/user-list-timeline";
 		query = {
 			listId: props.list,
+			idOnly: idOnly,
 		};
 		connection = stream.useChannel("userList", {
 			listId: props.list,
-		});
-		connection.on("note", prepend, {
 			idOnly: idOnly,
 		});
+		connection.on("note", prepend);
 		connection.on("userAdded", onUserAdded);
 		connection.on("userRemoved", onUserRemoved);
 	} else if (props.src === "channel") {
 		endpoint = "channels/timeline";
 		query = {
 			channelId: props.channel,
+			idOnly: idOnly,
 		};
 		connection = stream.useChannel("channel", {
 			channelId: props.channel,
@@ -184,6 +189,7 @@ const setupStream = () => {
 		endpoint = "roles/notes";
 		query = {
 			roleId: props.role,
+			idOnly: idOnly,
 		};
 		connection = stream.useChannel("roleTimeline", {
 			roleId: props.role,

@@ -45,6 +45,7 @@ export const paramDef = {
 		untilId: { type: "string", format: "misskey:id" },
 		sinceDate: { type: "integer" },
 		untilDate: { type: "integer" },
+		idOnly: { type: 'boolean', default: false },
 	},
 	required: ["antennaId"],
 } as const;
@@ -100,7 +101,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				this.noteReadService.read(me.id, notes);
 			}
 
-			return await this.noteEntityService.packMany(notes, me);
+			return await this.noteEntityService.packMany(notes, me, undefined, ps.idOnly);
 		});
 	}
 }
