@@ -106,11 +106,24 @@ function arrayToEntries(entities: MisskeyEntity[]): [string, MisskeyEntity][] {
 	return entities.map((en) => [en.id, en]);
 }
 
-function concatMapWithArray(
+const fetchNotes = async (items) => {
+	for (const item of items.values()) {
+		if (!item.createdAt) {
+			const res = await fetch(`/notes/${item.id}.json`);
+			if (!res.ok) return;
+			const newItem = await res.json();
+			items.set(item.id, newItem);
+		}
+	}
+}
+
+async function concatMapWithArray(
 	map: MisskeyEntityMap,
 	entities: MisskeyEntity[],
-): MisskeyEntityMap {
-	return new Map([...map, ...arrayToEntries(entities)]);
+): Promise<MisskeyEntityMap> {
+	const tmpItems = new Map([...map, ...arrayToEntries(entities)]);
+	await fetchNotes(tmpItems);
+	return tmpItems;
 }
 </script>
 <script lang="ts" setup>
@@ -120,6 +133,7 @@ const props = withDefaults(defineProps<{
 	pagination: Paging;
 	disableAutoLoad?: boolean;
 	displayLimit?: number;
+	timeline?: boolean;
 }>(), {
 	displayLimit: 20,
 });
@@ -225,18 +239,18 @@ async function init(): Promise<void> {
 	await os.api(props.pagination.endpoint, {
 		...params,
 		limit: props.pagination.limit ?? 10,
-	}).then(res => {
+	}).then(async res => {
 		for (let i = 0; i < res.length; i++) {
 			const item = res[i];
 			if (i === 3) item._shouldInsertAd_ = true;
 		}
 
 		if (res.length === 0 || props.pagination.noPaging) {
-			concatItems(res);
+			await concatItems(res);
 			more.value = false;
 		} else {
 			if (props.pagination.reversed) moreFetching.value = true;
-			concatItems(res);
+			await concatItems(res);
 			more.value = true;
 		}
 
@@ -265,17 +279,17 @@ const fetchMore = async (): Promise<void> => {
 		} : {
 			untilId: Array.from(items.value.keys()).at(-1),
 		}),
-	}).then(res => {
+	}).then(async res => {
 		for (let i = 0; i < res.length; i++) {
 			const item = res[i];
 			if (i === 10) item._shouldInsertAd_ = true;
 		}
 
-		const reverseConcat = _res => {
+		const reverseConcat = async _res => {
 			const oldHeight = scrollableElement ? scrollableElement.scrollHeight : getBodyScrollHeight();
 			const oldScroll = scrollableElement ? scrollableElement.scrollTop : window.scrollY;
 
-			items.value = concatMapWithArray(items.value, _res);
+			items.value = await concatMapWithArray(items.value, _res);
 
 			return nextTick(() => {
 				if (scrollableElement) {
@@ -295,7 +309,7 @@ const fetchMore = async (): Promise<void> => {
 					moreFetching.value = false;
 				});
 			} else {
-				items.value = concatMapWithArray(items.value, res);
+				items.value = await concatMapWithArray(items.value, res);
 				more.value = false;
 				moreFetching.value = false;
 			}
@@ -306,7 +320,7 @@ const fetchMore = async (): Promise<void> => {
 					moreFetching.value = false;
 				});
 			} else {
-				items.value = concatMapWithArray(items.value, res);
+				items.value = await concatMapWithArray(items.value, res);
 				more.value = true;
 				moreFetching.value = false;
 			}
@@ -329,12 +343,12 @@ const fetchMoreAhead = async (): Promise<void> => {
 		} : {
 			sinceId: Array.from(items.value.keys()).at(-1),
 		}),
-	}).then(res => {
+	}).then(async res => {
 		if (res.length === 0) {
-			items.value = concatMapWithArray(items.value, res);
+			items.value = await concatMapWithArray(items.value, res);
 			more.value = false;
 		} else {
-			items.value = concatMapWithArray(items.value, res);
+			items.value = await concatMapWithArray(items.value, res);
 			more.value = true;
 		}
 		offset.value += res.length;
@@ -422,9 +436,11 @@ function unshiftItems(newItems: MisskeyEntity[]) {
  * 古いアイテムをitemsの末尾に追加し、displayLimitを適用する
  * @param oldItems 古いアイテムの配列
  */
-function concatItems(oldItems: MisskeyEntity[]) {
+async function concatItems(oldItems: MisskeyEntity[]) {
 	const length = oldItems.length + items.value.size;
-	items.value = new Map([...items.value, ...arrayToEntries(oldItems)].slice(0, props.displayLimit));
+	const tmpItems = new Map([...items.value, ...arrayToEntries(oldItems)].slice(0, props.displayLimit));
+	await fetchNotes(tmpItems);
+	items.value = tmpItems;
 
 	if (length >= props.displayLimit) more.value = true;
 }

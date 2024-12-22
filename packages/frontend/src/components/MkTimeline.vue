@@ -11,7 +11,6 @@ import { defaultStore } from "@/store";
 import { useStream } from "@/stream";
 import { computed, onBeforeMount, onUnmounted, provide, ref, watch } from "vue";
 import { Paging } from "./MkPagination.vue";
-import * as os from "@/os";
 
 const key = ref<number>(0)
 

@@ -12,7 +12,6 @@ import { i18n } from "@/i18n";
 import * as os from "@/os";
 import { defaultStore } from "@/store";
 import { MisskeyEntity } from "@/types/date-separated-list";
-import { onMounted, ref } from "vue";
 
 export default defineComponent({
 	props: {
@@ -55,21 +54,8 @@ export default defineComponent({
 
 		if (props.items.length === 0) return;
 
-        const children = ref<any[]>([]);
-
-		const renderChildrenImpl = async () => {
-			const items = await Promise.all(props.items.map(async (item) => {
-				// チェックするプロパティはなんでも良い
-				// idOnlyが有効でid以外が存在しない場合は取得する
-				if (!item.createdAt) {
-					const res = await fetch(`/notes/${item.id}.json`);
-					if (!res.ok) return null;
-					return await res.json();
-				}
-				return item;
-			}));
-
-			return items.map((item, i) => {
+		const renderChildrenImpl = () => {
+			return props.items.map((item, i) => {
 				if (!slots || !slots.default) return;
 
 				const el = slots.default({
@@ -78,9 +64,9 @@ export default defineComponent({
 				if (el.key == null && item.id) el.key = item.id;
 
 				if (
-					i !== items.length - 1 &&
+					i !== props.items.length - 1 &&
 					new Date(item.createdAt).getDate() !==
-						new Date(items[i + 1].createdAt).getDate()
+						new Date(props.items[i + 1].createdAt).getDate()
 				) {
 					const separator = h(
 						"div",
@@ -112,7 +98,7 @@ export default defineComponent({
 										class: $style["date-2"],
 									},
 									[
-										getDateText(items[i + 1].createdAt),
+										getDateText(props.items[i + 1].createdAt),
 										h("i", {
 											class: `ti ti-chevron-down ${$style["date-2-icon"]}`,
 										}),
@@ -139,8 +125,8 @@ export default defineComponent({
 			});
 		}
 
-		const renderChildren = async () => {
-			const children = await renderChildrenImpl();
+		const renderChildren = () => {
+			const children = renderChildrenImpl();
 			if (isDebuggerEnabled(6864)) {
 				const nodes = children.flatMap((node) => node ?? []);
 				const keys = new Set(nodes.map((node) => node.key));
@@ -158,10 +144,6 @@ export default defineComponent({
 			}
 			return children;
 		};
-
-		onMounted(async () => {
-			children.value = await renderChildren();
-		});
 
 		function onBeforeLeave(el: HTMLElement) {
 			el.style.top = `${el.offsetTop}px`;
@@ -192,7 +174,7 @@ export default defineComponent({
 							}
 						: {}),
 				},
-				{ default: () => children.value },
+				{ default: renderChildren },
 			);
 	},
 });
