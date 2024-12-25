@@ -11,6 +11,7 @@ import { defaultStore } from "@/store";
 import { useStream } from "@/stream";
 import { computed, onBeforeMount, onUnmounted, provide, ref, watch } from "vue";
 import { Paging } from "./MkPagination.vue";
+import { deepMerge } from "@/scripts/merge.js";
 import * as os from "@/os";
 
 const key = ref<number>(0)
@@ -40,11 +41,11 @@ const prepend = async (data) => {
 	let note = data;
 
 	// チェックするプロパティはなんでも良い
-	// idOnlyが有効でid以外が存在しない場合は取得する
+	// minimizeが有効でid以外が存在しない場合は取得する
 	if (!data.visibility) {
 		const res = await fetch(`/notes/${data.id}.json`);
 		if (!res.ok) return;
-		note = await res.json();
+		note = deepMerge(data, await res.json());
 	}
 
 	tlComponent.pagingComponent?.prepend(note);
@@ -90,7 +91,7 @@ let endpoint;
 let query;
 let connection;
 let pagenation: Paging;
-const idOnly = !iAmModerator;
+const minimize = !iAmModerator;
 
 const stream = useStream();
 
@@ -102,7 +103,7 @@ const setupStream = () => {
 		};
 		connection = stream.useChannel("antenna", {
 			antennaId: props.antenna,
-			idOnly: idOnly,
+			minimize: minimize,
 		});
 		connection.on("note", prepend);
 	} else if (props.src === "home") {
@@ -112,7 +113,7 @@ const setupStream = () => {
 		};
 		connection = stream.useChannel("homeTimeline", {
 			withReplies: defaultStore.state.showTimelineReplies,
-			idOnly: idOnly,
+			minimize: minimize,
 		});
 		connection.on("note", prepend);
 	} else if (props.src === "local") {
@@ -122,7 +123,7 @@ const setupStream = () => {
 		};
 		connection = stream.useChannel("localTimeline", {
 			withReplies: defaultStore.state.showTimelineReplies,
-			idOnly: idOnly,
+			minimize: minimize,
 		});
 		connection.on("note", prepend);
 	} else if (props.src === "public") {
@@ -138,7 +139,7 @@ const setupStream = () => {
 			withLocal: defaultStore.state.publicTlShowLocalPost,
 			withRemote: defaultStore.state.publicTlShowRemoteFollowPost,
 			withChannel: defaultStore.state.publicTlShowChannelFollowPost,
-			idOnly: idOnly,
+			minimize: minimize,
 		});
 		connection.on("note", prepend);
 	} else if (props.src === "mentions") {
@@ -166,7 +167,7 @@ const setupStream = () => {
 			listId: props.list,
 		});
 		connection.on("note", prepend, {
-			idOnly: idOnly,
+			minimize: minimize,
 		});
 		connection.on("userAdded", onUserAdded);
 		connection.on("userRemoved", onUserRemoved);
@@ -177,7 +178,7 @@ const setupStream = () => {
 		};
 		connection = stream.useChannel("channel", {
 			channelId: props.channel,
-			idOnly: idOnly,
+			minimize: minimize,
 		});
 		connection.on("note", prepend);
 	} else if (props.src === "role") {
@@ -187,7 +188,7 @@ const setupStream = () => {
 		};
 		connection = stream.useChannel("roleTimeline", {
 			roleId: props.role,
-			idOnly: idOnly,
+			minimize: minimize,
 		});
 		connection.on("note", prepend);
 	}

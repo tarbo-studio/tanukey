@@ -18,7 +18,7 @@ class UserListChannel extends Channel {
 	private listId: string;
 	public listUsers: User["id"][] = [];
 	private listUsersClock: NodeJS.Timer;
-	private idOnly: boolean;
+	private minimize: boolean;
 
 	constructor(
 		private userListsRepository: UserListsRepository,
@@ -36,7 +36,7 @@ class UserListChannel extends Channel {
 	@bindThis
 	public async init(params: any) {
 		this.listId = params.listId as string;
-		this.idOnly = params.idOnly as boolean;
+		this.minimize = params.minimize as boolean;
 
 		// Check existence and owner
 		const list = await this.userListsRepository.findOneBy({
@@ -113,9 +113,13 @@ class UserListChannel extends Channel {
 		)
 			return;
 
-		if (this.idOnly && ['public', 'home'].includes(note.visibility)) {
-			const idOnlyNote = { id: note.id };
-			this.send("note", idOnlyNote);
+		if (this.minimize && ['public', 'home'].includes(note.visibility)) {
+			this.send('note', {
+				id: note.id, myReaction: note.myReaction,
+				poll: note.poll ? { choices: note.poll.choices } : undefined,
+				reply: note.reply ? { myReaction: note.reply.myReaction } : undefined,
+				renote: note.renote ? { myReaction: note.renote.myReaction } : undefined,
+			});
 		} else {
 			this.connection.cacheNote(note);
 			this.send("note", note);

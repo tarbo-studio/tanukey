@@ -13,7 +13,7 @@ class HomeTimelineChannel extends Channel {
 	public static requireCredential = true;
 	public static kind = "read:account";
 	private withReplies: boolean;
-	private idOnly: boolean;
+	private minimize: boolean;
 
 	constructor(
 		private noteEntityService: NoteEntityService,
@@ -28,7 +28,7 @@ class HomeTimelineChannel extends Channel {
 	@bindThis
 	public async init(params: any) {
 		this.withReplies = params.withReplies as boolean;
-		this.idOnly = params.idOnly as boolean;
+		this.minimize = params.minimize as boolean;
 
 		this.subscriber.on("notesStream", this.onNote);
 	}
@@ -120,9 +120,13 @@ class HomeTimelineChannel extends Channel {
 		if (await checkWordMute(note, this.user, this.userProfile!.mutedWords))
 			return;
 
-		if (this.idOnly && ['public', 'home'].includes(note.visibility)) {
-			const idOnlyNote = { id: note.id };
-			this.send("note", idOnlyNote);
+		if (this.minimize && ['public', 'home'].includes(note.visibility)) {
+			this.send('note', {
+				id: note.id, myReaction: note.myReaction,
+				poll: note.poll ? { choices: note.poll.choices } : undefined,
+				reply: note.reply ? { myReaction: note.reply.myReaction } : undefined,
+				renote: note.renote ? { myReaction: note.renote.myReaction } : undefined,
+			});
 		} else {
 			this.connection.cacheNote(note);
 			this.send("note", note);

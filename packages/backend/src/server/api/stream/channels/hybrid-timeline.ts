@@ -18,7 +18,7 @@ class HybridTimelineChannel extends Channel {
 	private withLocal: boolean;
 	private withRemote: boolean;
 	private withChannel: boolean;
-	private idOnly: boolean;
+	private minimize: boolean;
 
 	constructor(
 		private metaService: MetaService,
@@ -43,7 +43,7 @@ class HybridTimelineChannel extends Channel {
 		this.withLocal = params.withLocal as boolean;
 		this.withRemote = params.withRemote as boolean;
 		this.withChannel = params.withChannel as boolean;
-		this.idOnly = params.idOnly as boolean;
+		this.minimize = params.minimize as boolean;
 
 		// Subscribe events
 		this.subscriber.on("notesStream", this.onNote);
@@ -170,9 +170,13 @@ class HybridTimelineChannel extends Channel {
 		)
 			return;
 
-		if (this.idOnly && ['public', 'home'].includes(note.visibility)) {
-			const idOnlyNote = { id: note.id };
-			this.send("note", idOnlyNote);
+		if (this.minimize && ['public', 'home'].includes(note.visibility)) {
+			this.send('note', {
+				id: note.id, myReaction: note.myReaction,
+				poll: note.poll ? { choices: note.poll.choices } : undefined,
+				reply: note.reply ? { myReaction: note.reply.myReaction } : undefined,
+				renote: note.renote ? { myReaction: note.renote.myReaction } : undefined,
+			});
 		} else {
 			this.connection.cacheNote(note);
 			this.send("note", note);

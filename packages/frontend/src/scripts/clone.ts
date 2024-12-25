@@ -1,7 +1,7 @@
 // structredCloneが遅いため
 // SEE: http://var.blog.jp/archives/86038606.html
 
-type Cloneable =
+export declare type Cloneable =
 	| string
 	| number
 	| boolean
